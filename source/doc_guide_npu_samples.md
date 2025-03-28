@@ -236,7 +236,7 @@ axera@raspberrypi:~/Depth-Anything-V2$ python python/infer.py --img examples/dem
 ## LLM 示例
 
 - 模型转请参考[大模型编译文档](https://pulsar2-docs.readthedocs.io/zh-cn/latest/appendix/build_llm.html)
-- 预编译 ModelZoo-LLM 请参考[百度网盘](https://pan.baidu.com/s/1grJNjcpUln-fDBisJxuvCA?pwd=mys8)
+- 更多示例请参考[Huggingface](https://huggingface.co/AXERA-TECH)
 
 ### Tokenizer 解析器
 
@@ -255,7 +255,7 @@ chmod a+x Miniconda3-latest-Linux-aarch64.sh
 启用 python 环境
 
 ```
-conda create --name axcl python=3.9
+conda create --name axcl python=3.10
 conda activate axcl
 ```
 
@@ -265,31 +265,36 @@ conda activate axcl
 pip install transformers==4.41.1 -i https://mirrors.aliyun.com/pypi/simple
 ```
 
-### Qwen2.5
+### DeepSeek-R1-Distill-Qwen-1.5B
 
-拷贝相关文件到 Host
+拷贝相关文件到树莓派5上
+
+- 模型文件获取 [Huggingface](https://huggingface.co/AXERA-TECH/DeepSeek-R1-Distill-Qwen-1.5B-GPTQ-Int4)
 
 **文件说明**
 
 ```
-(base) axera@raspberrypi:~/qwen2.5-0.5b-prefill-ax650 $ tree
+(base) axera@raspberrypi:~/samples/deepseek-1.5b-gptq-int4 $ tree
 .
-├── main_pcie_prefill
-├── qwen2.5-0.5B-prefill-ax650
+├── config.json
+├── deepseek-r1-1.5b-gptq-int4-ax650
 │   ├── model.embed_tokens.weight.bfloat16.bin
 │   ├── qwen2_p128_l0_together.axmodel
-│   ├── qwen2_p128_l10_together.axmodel
 ......
 │   ├── qwen2_p128_l8_together.axmodel
 │   ├── qwen2_p128_l9_together.axmodel
 │   └── qwen2_post.axmodel
-├── qwen2.5_tokenizer
-│   ├── merges.txt
+├── deepseek-r1_tokenizer
 │   ├── tokenizer_config.json
-│   ├── tokenizer.json
-│   └── vocab.json
-├── qwen2.5_tokenizer.py
-└── run_qwen2.5_0.5B_prefill_pcie.sh
+│   └── tokenizer.json
+├── deepseek-r1_tokenizer.py
+├── main_axcl_aarch64
+├── main_axcl_x86
+├── main_prefill
+├── post_config.json
+├── run_deepseek-r1_1.5b_gptq_int4_ax650.sh
+├── run_deepseek-r1_1.5b_gptq_int4_axcl_aarch64.sh
+└── run_deepseek-r1_1.5b_gptq_int4_axcl_x86.sh
 ```
 
 **启动 tokenizer 解析器**
@@ -297,54 +302,100 @@ pip install transformers==4.41.1 -i https://mirrors.aliyun.com/pypi/simple
 运行 tokenizer 服务，Host ip 默认为 localhost，端口号设置为 12345，正在运行后信息如下
 
 ```
-(axcl) axera@raspberrypi:~/qwen2.5-0.5b-prefill-ax650 $ python qwen2.5_tokenizer.py --port 12345
+(axcl) axera@raspberrypi:~/samples/deepseek-1.5b-gptq-int4 $ python deepseek-r1_tokenizer.py --port 12345
 None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
 Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
-None None 151645 <|im_end|>
-<|im_start|>system
-You are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>
-<|im_start|>user
-hello world<|im_end|>
-<|im_start|>assistant
-
-[151644, 8948, 198, 2610, 525, 1207, 16948, 11, 3465, 553, 54364, 14817, 13, 1446, 525, 264, 10950, 17847, 13, 151645, 198, 151644, 872, 198, 14990, 1879, 151645, 198, 151644, 77091, 198]
+151646 <｜begin▁of▁sentence｜> 151643 <｜end▁of▁sentence｜>
+<｜begin▁of▁sentence｜>You are DeepSeek-R1, You are a helpful assistant.<｜User｜>hello world<｜Assistant｜>
+[151646, 151646, 2610, 525, 18183, 39350, 10911, 16, 11, 1446, 525, 264, 10950, 17847, 13, 151644, 14990, 1879, 151645]
 http://localhost:12345
 ```
 
-**运行 Qwen 2.5**
+**运行 DeepSeek-R1-1.5B**
 
 ```
-(base) axera@raspberrypi:~/qtang/llama_axera_cpp $ ./run_qwen2_0.5B_prefill_pcie.sh
-[I][                            Init][ 129]: LLM init start
-  7% | ███                               |   2 /  27 [1.30s<17.54s, 1.54 count/s] embed_selector init okcat: /proc/ax_proc/mem_cmm_info: No such file or directory
- 11% | ████                              |   3 /  27 [1.75s<15.74s, 1.72 count/s] init 0 axmodel ok,remain_cmm(-1 MB)cat: /proc/ax_proc/mem_cmm_info: No such file or directory
-......
- 96% | ███████████████████████████████   |  26 /  27 [7.34s<7.62s, 3.54 count/s] init 23 axmodel ok,remain_cmm(-1 MB)cat: /proc/ax_proc/mem_cmm_info: No such file or directory
-100% | ████████████████████████████████ |  27 /  27 [12.84s<12.84s, 2.10 count/s] init post axmodel ok,remain_cmm(-1 MB)
-[I][                            Init][ 253]: max_token_len : 1023
-[I][                            Init][ 258]: kv_cache_size : 128, kv_cache_num: 1023
-[I][                            Init][ 266]: prefill_token_num : 128
-[I][                            Init][ 348]: LLM init ok
-Type "q" to exit, Ctrl+c to stop current running
->> 你是谁？
-[I][                             Run][ 511]: ttft: 128.70 ms
-我是来自阿里云的大规模语言模型，我叫通义千问。
-[N][                             Run][ 636]: hit eos,avg 26.44 token/s
+(base) axera@raspberrypi:~/samples/deepseek-1.5b-gptq-int4 $ ./run_deepseek-r1_1.5b_gptq_int4_axcl_aarch64.sh
+build time: Feb 13 2025 15:44:57
+[I][                            Init][ 111]: LLM init start
+bos_id: 151646, eos_id: 151643
+100% | ████████████████████████████████ |  31 /  31 [21.03s<21.03s, 1.47 count/s] init post axmodel okremain_cmm(6219 MB)
+[I][                            Init][ 226]: max_token_len : 1023
+[I][                            Init][ 231]: kv_cache_size : 256, kv_cache_num: 1023
+[I][                     load_config][ 282]: load config:
+{
+    "enable_repetition_penalty": false,
+    "enable_temperature": true,
+    "enable_top_k_sampling": true,
+    "enable_top_p_sampling": false,
+    "penalty_window": 20,
+    "repetition_penalty": 1.2,
+    "temperature": 0.9,
+    "top_k": 10,
+    "top_p": 0.8
+}
 
->> 深圳在哪里？
-[I][                             Run][ 511]: ttft: 128.96 ms
-深圳位于中国广东省，是中国的经济中心之一。
-[N][                             Run][ 636]: hit eos,avg 25.89 token/s
+[I][                            Init][ 288]: LLM init ok
+Type "q" to exit, Ctrl+c to stop current running
+>> who are you?
+<think>
+您好！我是由中国的深度求索（DeepSeek）公司开发的智能助手DeepSeek-R1。如您有任何任何问题，我会尽我所能为您提供帮助和答案。
+</think>
+
+您好！我是由中国的深度求索（DeepSeek）公司开发的智能助手DeepSeek-R1。如您有任何任何问题，我会尽我所能为您提供帮助和答案。
+
+[N][                             Run][ 610]: hit eos,avg 14.46 token/s
+
+>> 直角三角形两直角边是3和4，斜边是多少？简单思考
+<think>
+首先，我知道直角三角形的两条直角边分别为3和4。
+
+根据勾股定理，斜边的长度可以通过公式√(3² + 4²)计算得到。
+
+计算3的平方得到9，4的平方得到16，然后两者相加得到25。
+
+接着，计算25的平方根，结果是5。
+
+因此，斜边的长度是5。
+</think>
+
+要计算直角三角形的斜边长度，可以使用勾股定理。勾股定理指出，对于一个直角三角形，斜边的平方等于两条直角边的平方和。具体步骤如下：
+
+1. **已知条件**：
+   - 直角三角形的两条直角边分别为 3 和 4。
+
+2. **勾股定理公式**：
+   \[
+   斜边 = \sqrt{a^2 + b^2}
+   \]
+   其中，\(a\) 和 \(b\) 是直角三角形的两条直角边。
+
+3. **代入已知数值**：
+   \[
+   斜边 = \sqrt{3^2 + 4^2} = \sqrt{9 + 16} = \sqrt{25}
+   \]
+
+4. **计算结果**：
+   \[
+   斜边 = 5
+   \]
+
+**最终答案**：
+\boxed{5}
+
+[N][                             Run][ 610]: hit eos,avg 14.17 token/s
 
 >> q
 
+(base) axera@raspberrypi:~/samples/deepseek-1.5b-gptq-int4 $ 
 ```
 
-### InternVL2-1B
+### InternVL2_5-1B
 
-InternVL2-1B 的详细模型导出、量化、编译的流程请参考[《基于 AX650N/AX630C 部署多模态大模型 InternVL2-1B》](https://zhuanlan.zhihu.com/p/4118849355)
+InternVL2_5-1B 的详细模型导出、量化、编译的流程请参考[《基于 AX650N/AX630C 部署多模态大模型 InternVL2-1B》](https://zhuanlan.zhihu.com/p/4118849355)
 
 拷贝相关文件到 Host 
+
+- 模型文件获取 [Huggingface](https://huggingface.co/AXERA-TECH/InternVL2_5-1B)
 
 **文件说明**
 
@@ -424,6 +475,175 @@ image >> ./ssd_car.jpg
 prompt >> q
 (base) axera@raspberrypi:~/internvl2-1b-448-ax650 $ 
 ```
+
+## 生成式大模型
+
+### StableDiffusionv1.5
+
+拷贝相关文件到树莓派5上
+
+- 模型文件获取 [Huggingface](https://huggingface.co/AXERA-TECH/lcm-lora-sdv1-5)
+
+**文件说明**
+
+```
+(axcl) axera@raspberrypi:~/samples/lcm-lora-sdv1-5 $ tree -L 2
+.
+├── asserts
+│   ├── img2img-init.png
+│   ├── img2img_output_axe.png
+│   ├── lcm_lora_sdv1_5_axmodel.png
+│   ├── lcm_lora_sdv1-5_imgGrid_output.png
+│   └── txt2img_output_axe.png
+├── config.json.txt
+├── Disclaimer.md
+├── img2img_output_axe.png
+├── lcm_lora_sdv1-5_imgGrid_output.png
+├── LICENSE
+├── model_convert
+│   ├── config_unet_u16.json
+│   ├── config_vae_decoder_u16.json
+│   ├── config_vae_encoder_u16.json
+│   ├── README.md
+│   ├── requirements.txt
+│   ├── sd15_export_onnx.py
+│   └── sd15_lora_prepare_data.py
+├── models
+│   ├── img2img-init.png
+│   ├── text_encoder
+│   ├── time_input_img2img.npy
+│   ├── time_input_txt2img.npy
+│   ├── tokenizer
+│   ├── unet.axmodel
+│   ├── vae_decoder.axmodel
+│   └── vae_encoder.axmodel
+├── README.md
+├── requirements.txt
+├── run_img2img_axe_infer.py
+├── run_img2img_onnx_infer.py
+├── run_txt2img_axe_infer.py
+├── run_txt2img_onnx_infer.py
+└── txt2img_output_axe.png
+```
+
+**环境安装**
+
+安装 axcl npu python 库
+
+```
+wget https://github.com/AXERA-TECH/pyaxengine/releases/download/0.1.1rc0/axengine-0.1.1-py3-none-any.whl
+pip install axengine-0.1.1-py3-none-any.whl
+```
+
+安装其他 python 依赖
+
+```
+cd lcm-lora-sdv1-5
+pip install -r python/requirements.txt
+```
+
+#### 文生图
+
+- 运行 `run_txt2img_axe_infer.py`
+
+**Input Prompt**
+
+```
+Self-portrait oil painting, a beautiful cyborg with golden hair, 8k
+```
+
+**Output**
+
+```
+(sd1_5) axera@raspberrypi:~/samples/lcm-lora-sdv1-5 $ python run_txt2img_axe_infer.py
+[INFO] Available providers:  ['AXCLRTExecutionProvider']
+prompt: Self-portrait oil painting, a beautiful cyborg with golden hair, 8k
+text_tokenizer: ./models/tokenizer
+text_encoder: ./models/text_encoder
+unet_model: ./models/unet.axmodel
+vae_decoder_model: ./models/vae_decoder.axmodel
+time_input: ./models/time_input_txt2img.npy
+save_dir: ./txt2img_output_axe.png
+text encoder take 1877.4ms
+[INFO] Using provider: AXCLRTExecutionProvider
+[INFO] SOC Name: AX650N
+[INFO] VNPU type: VNPUType.DISABLED
+[INFO] Compiler version: 3.3 972f38ca
+[INFO] Using provider: AXCLRTExecutionProvider
+[INFO] SOC Name: AX650N
+[INFO] VNPU type: VNPUType.DISABLED
+[INFO] Compiler version: 3.3 972f38ca
+load models take 14023.5ms
+unet once take 437.7ms
+unet once take 433.7ms
+unet once take 433.5ms
+unet once take 433.5ms
+unet loop take 1741.6ms
+vae inference take 913.9ms
+save image take 170.0ms
+(sd1_5) axera@raspberrypi:~/samples/lcm-lora-sdv1-5 $ 
+```
+
+**Output Image**
+
+![](../res/txt2img_output_axe.png)
+
+#### 图生图
+
+- 运行 `run_txt2img_axe_infer.py`
+
+**Input Prompt**
+
+```
+Astronauts in a jungle, cold color palette, muted colors, detailed, 8k
+```
+
+**Input Image**
+
+![](../res/img2img-init.png)
+
+**Output**
+
+```
+(sd1_5) axera@raspberrypi:~/samples/lcm-lora-sdv1-5 $ python run_img2img_axe_infer.py
+[INFO] Available providers:  ['AXCLRTExecutionProvider']
+prompt: Astronauts in a jungle, cold color palette, muted colors, detailed, 8k
+text_tokenizer: ./models/tokenizer
+text_encoder: ./models/text_encoder
+unet_model: ./models/unet.axmodel
+vae_encoder_model: ./models/vae_encoder.axmodel
+vae_decoder_model: ./models/vae_decoder.axmodel
+init image: ./models/img2img-init.png
+time_input: ./models/time_input_img2img.npy
+save_dir: ./img2img_output_axe.png
+text encoder take 1741.5ms
+[INFO] Using provider: AXCLRTExecutionProvider
+[INFO] SOC Name: AX650N
+[INFO] VNPU type: VNPUType.DISABLED
+[INFO] Compiler version: 3.3-dirty 2ecead35-dirty
+[INFO] Using provider: AXCLRTExecutionProvider
+[INFO] SOC Name: AX650N
+[INFO] VNPU type: VNPUType.DISABLED
+[INFO] Compiler version: 3.3 972f38ca
+[INFO] Using provider: AXCLRTExecutionProvider
+[INFO] SOC Name: AX650N
+[INFO] VNPU type: VNPUType.DISABLED
+[INFO] Compiler version: 3.3 972f38ca
+load models take 14768.5ms
+vae encoder inference take 458.8ms
+unet once take 433.4ms
+unet once take 433.5ms
+unet loop take 871.3ms
+vae decoder inference take 914.0ms
+grid image saved in ./lcm_lora_sdv1-5_imgGrid_output.png
+save image take 428.7ms
+(sd1_5) axera@raspberrypi:~/samples/lcm-lora-sdv1-5 $ 
+```
+
+**Output Image**
+
+![](../res/lcm_lora_sdv1-5_imgGrid_output.png)
+
 
 ## 音频大模型
 
