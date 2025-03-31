@@ -1,6 +1,6 @@
 # AXCL application development guide based on Raspberry PI 5
 
-[Web Preview](https://axcl-docs.readthedocs.io/zh-cn/latest/)
+[Web Preview](https://axcl-pi5-examples-cn.readthedocs.io/zh-cn/latest/index.html)
 
 ## 1. 项目背景
 

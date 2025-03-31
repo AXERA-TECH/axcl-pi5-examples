@@ -389,6 +389,7 @@ Type "q" to exit, Ctrl+c to stop current running
 (base) axera@raspberrypi:~/samples/deepseek-1.5b-gptq-int4 $ 
 ```
 
+## VLM 示例
 ### InternVL2_5-1B
 
 InternVL2_5-1B 的详细模型导出、量化、编译的流程请参考[《基于 AX650N/AX630C 部署多模态大模型 InternVL2-1B》](https://zhuanlan.zhihu.com/p/4118849355)
@@ -400,44 +401,52 @@ InternVL2_5-1B 的详细模型导出、量化、编译的流程请参考[《基�
 **文件说明**
 
 ```
-(axcl) axera@raspberrypi:~/internvl2-1b-448-ax650 $ tree
+(axcl) axera@raspberrypi:~/samples/InternVL2_5-1B $ tree
 .
-├── internvl2_tokenizer
+├── config.json
+├── internvl2_5_1b_448_ax650
+│   ├── model.embed_tokens.weight.bfloat16.bin
+│   ├── qwen2_p320_l0_together.axmodel
+......
+│   ├── qwen2_p320_l9_together.axmodel
+│   ├── qwen2_post.axmodel
+│   └── vit_intern_2_5_sim_space2depth_nhwc.axmodel
+├── internvl2_5_tokenizer
 │   ├── added_tokens.json
 │   ├── merges.txt
 │   ├── special_tokens_map.json
 │   ├── tokenizer_config.json
 │   └── vocab.json
-├── internvl2_tokenizer_448.py
-├── internvl_448
-│   ├── intervl_vision_part_448.axmodel
-│   ├── model.embed_tokens.weight.bfloat16.bin
-│   ├── qwen2_p320_l0_together.axmodel
-......
-│   ├── qwen2_p320_l9_together.axmodel
-│   └── qwen2_post.axmodel
-├── main_internvl
-├── main_internvl_pcie
-├── run_internvl2_448_ax650.sh
-└── run_internvl2_448_pcie.sh
+├── internvl2_5_tokenizer_448.py
+├── main_aarch64_axcl
+├── run_internvl2_5_448_axcl_aarch64.sh
+└── ssd_car.jpg
 ```
 
 **启动 tokenizer 解析器**
 
+安装 **tokenizer 解析器** 必要依赖请参考 `5.3.1. Tokenizer 解析器` 章节。
+
 运行 tokenizer 服务，Host ip 默认为 localhost，端口号设置为 12345，正在运行后信息如下
 
 ```
-(axcl_test) axera@raspberrypi:~/internvl2-1b-448-ax650 $ python internvl2_tokenizer_448.py --port 12345
-None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
-Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+(axcl) axera@raspberrypi:~/samples/InternVL2_5-1B $ python internvl2_5_tokenizer_448.py --port 12345
 None None 151645 <|im_end|>
-[151644, 8948, 198, 56568, 104625, 100633, 104455, 104800, 101101, 32022, ...... 5501, 7512, 279, 2168, 19620, 13, 151645, 151644, 77091, 198]
+[151644, 8948, 198, 56568, 104625, 100633, 104455, 104800, 101101, 32022, 102022, 99602, 100013, 9370, 90286, 21287, 42140, 
+53772, 35243, 26288, 104949, 3837, 105205, 109641, 67916, 30698, 11, 54851, 46944, 115404, 42192, 99441, 100623, 48692, 100168, 
+110498, 1773, 151645, 151644, 872, 198, 151665, 151667, 151667, 151667, 151667, 151667, 151667, 151667, 151667, 
+....
+151667, 151667, 151667, 151667, 151667, 151667, 151667, 151667, 151667, 151667, 151667, 151667, 151667, 151667, 151667, 
+151667, 151667, 151667, 151666, 198, 5501, 7512, 279, 2168, 19620, 13, 151645, 151644, 77091, 198]
 310
-[151644, 8948, 198, 56568, 104625, 100633, 104455, 104800, 101101, 32022, ......151645, 151644, 77091, 198]
-http://localhost:12345
+[151644, 8948, 198, 56568, 104625, 100633, 104455, 104800, 101101, 32022, 102022, 99602, 100013, 9370, 90286, 
+21287, 42140, 53772, 35243, 26288, 104949, 3837, 105205, 109641, 67916, 30698, 11, 54851, 46944, 115404, 
+42192, 99441, 100623, 48692, 100168, 110498, 1773, 151645, 151644, 872, 198, 14990, 1879, 151645, 151644, 77091, 198]
+47
+http://0.0.0.0:12345
 ```
 
-**运行 InternVL2-1B**
+**运行 InternVL2.5-1B**
 
 测试图片
 
@@ -446,35 +455,47 @@ http://localhost:12345
 输出信息
 
 ```
-(base) axera@raspberrypi:~/internvl2-1b-448-ax650 $ ./run_internvl2_448_pcie.sh
-[I][                            Init][ 135]: LLM init start
+(base) axera@raspberrypi:~/samples/InternVL2_5-1B $ ./run_internvl2_5_448_axcl_aarch64.sh
+[I][                            Init][ 128]: LLM init start
+[I][                            Init][ 321]: connect http://127.0.0.1:12345 ok
 bos_id: -1, eos_id: 151645
-  7% | ███                               |   2 /  27 [0.95s<12.82s, 2.11 count/s] embed_selector init okcat: /proc/ax_proc/mem_cmm_info: No such file or directory
- 11% | ████                              |   3 /  27 [1.40s<12.61s, 2.14 count/s] init 0 axmodel ok,remain_cmm(-1 MB)cat: /proc/ax_proc/mem_cmm_info: No such file or directory
-......
-100% | ████████████████████████████████ |  27 /  27 [8.99s<8.99s, 3.00 count/s] init post axmodel ok,remain_cmm(-1 MB)
-[I][                            Init][ 292]: max_token_len : 1023
-[I][                            Init][ 297]: kv_cache_size : 128, kv_cache_num: 1023
-[I][                            Init][ 305]: prefill_token_num : 320
-[I][                            Init][ 307]: vpm_height : 448,vpm_width : 448
-[I][                            Init][ 389]: LLM init ok
+  7% | ███                               |   2 /  27 [0.13s<1.73s, 15.62 count/s] embed_selector init ok
+[I][                             run][  30]: AXCLWorker start with devid 0
+100% | ████████████████████████████████ |  27 /  27 [8.02s<8.02s, 3.37 count/s] init post axmodel ok,remain_cmm(-1 MB)
+[I][                            Init][ 225]: image_encoder_height : 448, image_encoder_width: 448
+[I][                            Init][ 227]: max_token_len : 1023
+[I][                            Init][ 230]: kv_cache_size : 128, kv_cache_num: 1023
+[I][                            Init][ 238]: prefill_token_num : 320
+[I][                            Init][ 240]: prefill_max_token_num : 320
+________________________
+|    ID| remain cmm(MB)|
+========================
+|     0|             -1|
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+[I][                            Init][ 337]: LLM init ok
 Type "q" to exit, Ctrl+c to stop current running
-prompt >> who are you?
-image >>
-[I][                             Run][ 626]: ttft: 425.78 ms
-I am an AI assistant whose name is InternVL, developed jointly by Shanghai AI Lab and SenseTime.
-[N][                             Run][ 751]: hit eos,avg 29.24 token/s
+prompt >> Describe the picture
+image >> ssd_car.jpg
+[I][                          Encode][ 393]: image encode time : 361.53 ms, size : 229376
+[I][                          Encode][ 453]: offset : 42 out_embed.size() : 275072
+[I][                             Run][ 481]: input token num : 307, prefill_split_num : 1
+[I][                             Run][ 604]: ttft: 506.51 ms
+The image depicts a scene on a city street with a prominent red double-decker bus in the background. 
+The bus is adorned with an advertisement that reads, "THINGS GET MORE EXCITING WHEN YOU SAY YES." 
+The bus is traveling on a road with a white bicycle lane marked on it. The street is lined with buildings, 
+and there is a black car parked on the side of the road. A woman is standing in the foreground, smiling at the camera. 
+She is wearing a black jacket and a scarf. The overall atmosphere suggests a typical urban setting, 
+possibly in a city known for its iconic double-decker buses.
 
-prompt >> 图片中有什么?
-image >> ./ssd_car.jpg
-[I][                          Encode][ 468]: image encode time : 420.8 ms, size : 229376
-[I][                             Run][ 626]: ttft: 425.97 ms
-这张图片展示了一辆红色的双层巴士，巴士上有一个广告，广告上写着“THINGS GET MORE EXCITING WHEN YOU SAY YES”（当你说“是”时，事情会变得更加有趣）。巴士停在城市街道的一侧，街道两旁有建筑物和行人。图片中还有一位穿着黑色外套的女士站在巴士前微笑。
-[N][                             Run][ 751]: hit eos,avg 29.26 token/s
+[N][                             Run][ 756]: hit eos,avg 20.50 token/s
 
 prompt >> q
-(base) axera@raspberrypi:~/internvl2-1b-448-ax650 $ 
+[I][                             run][  80]: AXCLWorker exit with devid 0
+(base) axera@raspberrypi:~/samples/InternVL2_5-1B $ 
 ```
+
+### Qwen2.5-VL-3B
+(待补充)
 
 ## 生成式大模型
 
