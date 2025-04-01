@@ -265,6 +265,163 @@ conda activate axcl
 pip install transformers==4.41.1 -i https://mirrors.aliyun.com/pypi/simple
 ```
 
+
+### Qwen2.5-1.5B
+
+- 支持较长的上下文，2.5k
+- 支持 System Prompt 缓存
+- 支持 prefill 优化
+
+以上优化功能，最终都会惠及到所有的 LLM、VLM 模型上，可以简单理解为这个示例是尝鲜版本……
+
+拷贝相关文件到树莓派5上
+
+- 模型文件获取 [Huggingface](https://huggingface.co/AXERA-TECH/Qwen2.5-1.5B-Instruct-CTX-Int8)
+
+**文件说明**
+
+```
+(axcl) axera@raspberrypi:~/samples/Qwen2.5-1.5B-Instruct-CTX-Int8 $ tree -L 1
+.
+├── kvcache
+├── main
+├── main_axcl_aarch64
+├── main_axcl_x86
+├── post_config.json
+├── qwen2.5-1.5b-ctx-ax650
+├── qwen2.5_tokenizer
+├── qwen2.5_tokenizer_uid.py
+├── run_qwen2.5_1.5b_ctx_ax650.sh
+├── run_qwen2.5_1.5b_ctx_axcl_aarch64.sh
+└── run_qwen2.5_1.5b_ctx_axcl_x86.sh
+```
+
+**启动 tokenizer 解析器**
+
+```
+(axcl) axera@raspberrypi:~/samples/Qwen2.5-1.5B-Instruct-CTX-Int8 $ python qwen2.5_tokenizer_uid.py
+Server running at http://0.0.0.0:12345
+```
+
+**System prompt cache**
+
+- The System prompt can be preset through the configuration file from `--system_prompt`
+- The System prompt can be cached in the form of kv cache to a specified folder for quick loading at the next run time from `--kvcache_path`
+- This folder needs to be created manually before running, for example `mkdir kvcache`
+
+```
+(base) axera@raspberrypi:~/samples/qwen2.5-1.5b-ctx $ cat run_qwen2.5_1.5b_ctx_axcl_aarch64.sh
+./main_axcl_aarch64 \
+--system_prompt "你的名字叫小智（allen）,你是一个人畜无害的AI助手。深圳市今天（4月1日）阴天，愚人节，气温在14°C至19°C之间，微风。" \
+--kvcache_path "./kvcache" \
+--template_filename_axmodel "qwen2.5-1.5b-ctx-ax650/qwen2_p128_l%d_together.axmodel" \
+--axmodel_num 28 \
+--tokenizer_type 2 \
+--url_tokenizer_model "http://127.0.0.1:12345" \
+--filename_post_axmodel "qwen2.5-1.5b-ctx-ax650/qwen2_post.axmodel" \
+--filename_tokens_embed "qwen2.5-1.5b-ctx-ax650/model.embed_tokens.weight.bfloat16.bin" \
+--tokens_embed_num 151936 \
+--tokens_embed_size 1536 \
+--use_mmap_load_embed 1 \
+--live_print 1 \
+--devices 0
+```
+
+#### Inference with M.2 Accelerator card
+
+[What is M.2 Accelerator card?](https://axcl-pi5-examples-cn.readthedocs.io/zh-cn/latest/index.html), Show this DEMO based on Raspberry PI 5.
+
+```
+(base) axera@raspberrypi:~/samples/Qwen2.5-1.5B-Instruct-CTX-Int8 $ mkdir -p kvcache
+(base) axera@raspberrypi:~/samples/Qwen2.5-1.5B-Instruct-CTX-Int8 $ ./run_qwen2.5_1.5b_ctx_axcl_aarch64.sh
+[I][                            Init][ 134]: LLM init start
+[I][                            Init][  41]: connect http://127.0.0.1:12345 ok
+bos_id: -1, eos_id: 151645
+  3% | ██                                |   1 /  31 [0.46s<14.11s, 2.20 count/s] tokenizer init ok
+[I][                            Init][  45]: LLaMaEmbedSelector use mmap
+  6% | ███                               |   2 /  31 [0.46s<7.05s, 4.40 count/s] embed_selector init ok
+[I][                             run][  30]: AXCLWorker start with devid 0
+100% | ████████████████████████████████ |  31 /  31 [29.18s<29.18s, 1.06 count/s] init post axmodel ok,remain_cmm(-1 MB)m(-1 MB)
+[I][                            Init][ 235]: max_token_len : 2559
+[I][                            Init][ 238]: kv_cache_size : 256, kv_cache_num: 2559
+[I][                            Init][ 246]: prefill_token_num : 128
+[I][                            Init][ 250]: grp: 1, prefill_max_token_num : 1
+[I][                            Init][ 250]: grp: 2, prefill_max_token_num : 512
+[I][                            Init][ 250]: grp: 3, prefill_max_token_num : 1024
+[I][                            Init][ 250]: grp: 4, prefill_max_token_num : 1536
+[I][                            Init][ 250]: grp: 5, prefill_max_token_num : 2048
+________________________
+|    ID| remain cmm(MB)|
+========================
+|     0|             -1|
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+[I][                     load_config][ 282]: load config:
+{
+    "enable_repetition_penalty": false,
+    "enable_temperature": true,
+    "enable_top_k_sampling": true,
+    "enable_top_p_sampling": false,
+    "penalty_window": 20,
+    "repetition_penalty": 1.2,
+    "temperature": 0.9,
+    "top_k": 10,
+    "top_p": 0.8
+}
+
+[I][                            Init][ 275]: LLM init ok
+Type "q" to exit, Ctrl+c to stop current running
+[E][                    load_kvcache][ 100]: k_cache ./kvcache/k_cache_0.bin or v_cache ./kvcache/v_cache_0.bin not exist
+[W][                            main][ 223]: load kvcache from path: ./kvcache failed,generate kvcache
+100% | ████████████████████████████████ |  53 /  53 [5.06s<5.06s, 10.47 token/s]
+[I][                      GetKVCache][ 419]: precompute_len:53
+[I][                            main][ 230]: generate kvcache to path: ./kvcache
+[I][                            main][ 232]: precompute_len: 53
+[I][                            main][ 233]: system_prompt: 你的名字叫小智（allen）,你是一个人畜无害的AI助手。深圳市今天（4月1日）阴天，愚人节，气温在14°C至19°C之间，微风。
+prompt >> 你是谁
+[I][                      SetKVCache][ 448]: prefill_grpid:2 kv_cache_num:512 precompute_len:53 input_num_token:10
+[I][                             Run][ 722]: input token num : 10
+[I][                             Run][ 823]: ttft: 548.23 ms
+我是深圳市气象局发布的天气预报，我叫小智，是为了解答大家关于天气的问题而设计的。如果你对天气有疑问，欢迎随时询问！
+
+[N][                             Run][ 975]: hit eos,avg 9.04 token/s
+
+[I][                      GetKVCache][ 419]: precompute_len:98
+prompt >> 你能干什么
+[I][                      SetKVCache][ 448]: prefill_grpid:2 kv_cache_num:512 precompute_len:98 input_num_token:10
+[I][                             Run][ 722]: input token num : 10
+[I][                             Run][ 823]: ttft: 548.07 ms
+我能回答关于天气、生活、科技、文化、娱乐、历史等方面的很多问题。如果你有任何想知道的内容，都可以问我哦！
+
+[N][                             Run][ 975]: hit eos,avg 9.03 token/s
+
+[I][                      GetKVCache][ 419]: precompute_len:135
+prompt >> q
+[I][                             run][  80]: AXCLWorker exit with devid 0
+
+
+>> q
+
+(base) axera@raspberrypi:~ $ axcl-smi
++------------------------------------------------------------------------------------------------+
+| AXCL-SMI  V2.25.0_20250117163029                                Driver  V2.25.0_20250117163029 |
++-----------------------------------------+--------------+---------------------------------------+
+| Card  Name                     Firmware | Bus-Id       |                          Memory-Usage |
+| Fan   Temp                Pwr:Usage/Cap | CPU      NPU |                             CMM-Usage |
+|=========================================+==============+=======================================|
+|    0  AX650N                    V2.25.0 | 0000:01:00.0 |                188 MiB /      945 MiB |
+|   --   37C                      -- / -- | 1%        0% |               2335 MiB /     7040 MiB |
++-----------------------------------------+--------------+---------------------------------------+
+
++------------------------------------------------------------------------------------------------+
+| Processes:                                                                                     |
+| Card      PID  Process Name                                                   NPU Memory Usage |
+|================================================================================================|
+|    0   147835  /home/axera/samples/qwen2.5-1.5b-ctx/main_axcl_aarch64               1990172 KiB |
++------------------------------------------------------------------------------------------------+
+(base) axera@raspberrypi:~ $
+```
+
+
 ### DeepSeek-R1-Distill-Qwen-1.5B
 
 拷贝相关文件到树莓派5上
